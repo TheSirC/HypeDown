@@ -63,9 +63,9 @@ fn main() {
         .get_matches();
 
     // Informations always used
-    let Host = "hypem.com";
-    let url = "http://" + Host;
-
+    let Host = "hypem.com".to_string();
+    let mut url = "http://" + Host;
+    url.to_string();
     // Get informations from arguments
     let account = argparse.value_of("account").unwrap().to_string(); // The use of unwrap is legit here because the argument must be entered
     let page = argparse.value_of("page").unwrap().to_string(); // The use of unwrap is legit here because the argument must be entered
@@ -87,7 +87,7 @@ fn main() {
     let hyper_client = Client::new();
 
     // Get the first response from the server
-    let client_response = hyper_client.get_head_response(&url).unwrap();
+    let client_response = hyper_client.get_head_response(format!("{}/{}/{}", &url,&account,&page)).unwrap();
 
     print!("# Waiting a response from the remote server... ");
 
