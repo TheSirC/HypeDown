@@ -23,8 +23,6 @@ use std::io::Write;
 use std::path::Path;
 use std::process::exit;
 
-static DEFAULT_FILENAME: &'static str = "index.html";
-
 fn main() {
 
     // Parse arguments
@@ -61,12 +59,14 @@ fn main() {
             .help("Assume Yes to all queries and do not prompt"))
         .get_matches();
 
-    // Get informations from arguments
+    // Informations always used
     let Host = "hypem.com";
     let url = "http://" + Host;
 
-    // let file = argparse.value_of("file")
-    //     .unwrap_or_else(|| url.split('/').last().unwrap_or(DEFAULT_FILENAME));
+    // Get informations from arguments
+    let account = argparse.value_of("account");
+    let page = argparse.value_of("page");
+    let limit = argparse.value_of("limit");
 
     let threads: usize = value_t!(argparse, "threads", usize).unwrap_or(num_cpus::get_physical());
 
