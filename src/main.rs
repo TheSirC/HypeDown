@@ -4,6 +4,7 @@ extern crate clap;
 extern crate hyper;
 extern crate libsnatch;
 extern crate num_cpus;
+extern crate json;
 
 use ansi_term::Colour::{Green, Yellow, Red, White};
 use clap::{App, Arg};
@@ -29,7 +30,7 @@ fn main() {
     // Parse arguments
 
     let argparse = App::new("HypeDown")
-        .about("A downloader for the Hype Machine*")
+        .about("A downloader for the Hype Machine")
         .version(crate_version!())
         .arg(Arg::with_name("account")
             .long("account")
@@ -46,11 +47,6 @@ fn main() {
             .short("l")
             .takes_value(true)
             .help("The maximum number of track you want to download"))
-        .arg(Arg::with_name("file")
-            .long("file")
-            .short("f")
-            .takes_value(true)
-            .help("The local file to save the remote content file"))
         .arg(Arg::with_name("threads")
             .long("threads")
             .short("t")
@@ -63,18 +59,14 @@ fn main() {
         .arg(Arg::with_name("force")
             .long("force")
             .help("Assume Yes to all queries and do not prompt"))
-        .arg(Arg::with_name("url")
-            .index(1)
-            //.multiple(true)
-            .required(true))
         .get_matches();
 
     // Get informations from arguments
+    let Host = "hypem.com";
+    let url = "http://" + Host;
 
-    let url = argparse.value_of("url").unwrap();
-
-    let file = argparse.value_of("file")
-        .unwrap_or_else(|| url.split('/').last().unwrap_or(DEFAULT_FILENAME));
+    // let file = argparse.value_of("file")
+    //     .unwrap_or_else(|| url.split('/').last().unwrap_or(DEFAULT_FILENAME));
 
     let threads: usize = value_t!(argparse, "threads", usize).unwrap_or(num_cpus::get_physical());
 
@@ -88,7 +80,7 @@ fn main() {
                  threads);
     }
 
-    // Run Snatch
+    // Run HypeDown
     let hyper_client = Client::new();
 
     // Get the first response from the server
@@ -139,7 +131,7 @@ fn main() {
         None => client_response,
     };
 
-    let local_path = Path::new(&file);
+    let local_path = Path::new(prompt_user(White.bold(), "Local path to download the tracks :"));
 
     if local_path.exists() {
         if local_path.is_dir() {
