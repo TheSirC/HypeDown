@@ -33,16 +33,19 @@ fn main() {
         .arg(Arg::with_name("account")
             .long("account")
             .short("a")
+            .required(true)
             .takes_value(true)
             .help("The account you want to download the favorites"))
         .arg(Arg::with_name("page")
             .long("page")
             .short("p")
+            .required(true)
             .takes_value(true)
             .help("The number of the page in which you want to download the favorite"))
         .arg(Arg::with_name("limit")
             .long("limit")
             .short("l")
+            .required(true)
             .takes_value(true)
             .help("The maximum number of track you want to download"))
         .arg(Arg::with_name("threads")
@@ -64,9 +67,9 @@ fn main() {
     let url = "http://" + Host;
 
     // Get informations from arguments
-    let account = argparse.value_of("account");
-    let page = argparse.value_of("page");
-    let limit = argparse.value_of("limit");
+    let account = argparse.value_of("account").unwrap().to_string(); // The use of unwrap is legit here because the argument must be entered
+    let page = argparse.value_of("page").unwrap().to_string(); // The use of unwrap is legit here because the argument must be entered
+    let limit = argparse.value_of("limit").unwrap().to_string(); // The use of unwrap is legit here because the argument must be entered
 
     let threads: usize = value_t!(argparse, "threads", usize).unwrap_or(num_cpus::get_physical());
 
