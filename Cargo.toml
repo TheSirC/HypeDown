@@ -1,0 +1,9 @@
+[package]
+name = "HypeDown"
+version = "0.1.0"
+authors = ["TheSirC <clocloranely@hotmail.fr>"]
+
+[dependencies]
+hyper = "0.10"
+json = "*"
+stopwatch = "0.0.7"
