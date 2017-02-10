@@ -63,9 +63,8 @@ fn main() {
         .get_matches();
 
     // Informations always used
-    let Host = "hypem.com".to_string();
-    let mut url = "http://" + Host;
-    url.to_string();
+    let host = "hypem.com".to_string();
+    let url: String = "http://".to_string() + &host;
     // Get informations from arguments
     let account = argparse.value_of("account").unwrap().to_string(); // The use of unwrap is legit here because the argument must be entered
     let page = argparse.value_of("page").unwrap().to_string(); // The use of unwrap is legit here because the argument must be entered
@@ -77,7 +76,6 @@ fn main() {
         println!("# [{}] version: {}",
                  Yellow.bold().paint("DEBUG_MODE"),
                  crate_version!());
-        println!("# [{}] file: {}", Yellow.bold().paint("DEBUG_MODE"), file);
         println!("# [{}] threads: {}",
                  Yellow.bold().paint("DEBUG_MODE"),
                  threads);
@@ -87,7 +85,7 @@ fn main() {
     let hyper_client = Client::new();
 
     // Get the first response from the server
-    let client_response = hyper_client.get_head_response(format!("{}/{}/{}", &url,&account,&page)).unwrap();
+    let client_response = hyper_client.get_head_response(&(format!("{}/{}/{}", &url,&account,&page))).expect("The server didn't answer");
 
     print!("# Waiting a response from the remote server... ");
 
@@ -134,7 +132,9 @@ fn main() {
         None => client_response,
     };
 
-    let local_path = Path::new(prompt_user(White.bold(), "Local path to download the tracks :"));
+    // Ask the user for a path to download the tracks
+    let path_user = &(prompt_user(White.bold(), "Local path to download the tracks :"));
+    let local_path = Path::new(path_user);
 
     if local_path.exists() {
         if local_path.is_dir() {
