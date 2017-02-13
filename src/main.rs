@@ -146,9 +146,10 @@ fn main() {
     // Retrieve the html page to extract the json containing the keys of the tracks
     let html_page = hyper_client.get_http_response(&(format!("{}/{}/{}", &url, &account, &page)))
         .expect("The server didn't answer");
-
+    // Create the parser
+    let json_class = Selector::parse("#displayList-data").expect("Initializing the parsing failed");
     // Parsing the DOM to find the json
-    // let json = html_page.s
+    let json = Html::parse_fragment(html_page).select(&json_class).expect("Parsing failed");
 
     if local_path.exists() {
         if local_path.is_dir() {
