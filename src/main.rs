@@ -5,6 +5,7 @@ extern crate hyper;
 extern crate libsnatch;
 extern crate num_cpus;
 extern crate json;
+extern crate scraper;
 
 use ansi_term::Colour::{Green, Yellow, Red, White};
 use clap::{App, Arg};
@@ -22,6 +23,7 @@ use std::io;
 use std::io::Write;
 use std::path::Path;
 use std::process::exit;
+use scraper::{Html, Selector};
 
 fn main() {
 
@@ -66,9 +68,12 @@ fn main() {
     let host = "hypem.com".to_string();
     let url: String = "http://".to_string() + &host;
     // Get informations from arguments
-    let account = argparse.value_of("account").unwrap().to_string(); // The use of unwrap is legit here because the argument must be entered
-    let page = argparse.value_of("page").unwrap().to_string(); // The use of unwrap is legit here because the argument must be entered
-    let limit = argparse.value_of("limit").unwrap().to_string(); // The use of unwrap is legit here because the argument must be entered
+    let account = argparse.value_of("account").unwrap().to_string(); // The use of unwrap is legit
+    // because the argument must be entered
+    let page = argparse.value_of("page").unwrap().to_string(); // The use of unwrap is legit
+    // because the argument must be entered
+    let limit = argparse.value_of("limit").unwrap().to_string(); // The use of unwrap is legit
+    // because the argument must be entered
 
     let threads: usize = value_t!(argparse, "threads", usize).unwrap_or(num_cpus::get_physical());
 
@@ -85,7 +90,9 @@ fn main() {
     let hyper_client = Client::new();
 
     // Get the first response from the server
-    let client_response = hyper_client.get_head_response(&(format!("{}/{}/{}", &url,&account,&page))).expect("The server didn't answer");
+    let client_response =
+        hyper_client.get_head_response(&(format!("{}/{}/{}", &url, &account, &page)))
+            .expect("The server didn't answer");
 
     print!("# Waiting a response from the remote server... ");
 
@@ -135,6 +142,13 @@ fn main() {
     // Ask the user for a path to download the tracks
     let path_user = &(prompt_user(White.bold(), "Local path to download the tracks :"));
     let local_path = Path::new(path_user);
+
+    // Retrieve the html page to extract the json containing the keys of the tracks
+    let html_page = hyper_client.get_http_response(&(format!("{}/{}/{}", &url, &account, &page)))
+        .expect("The server didn't answer");
+
+    // Parsing the DOM to find the json
+    // let json = html_page.s
 
     if local_path.exists() {
         if local_path.is_dir() {
