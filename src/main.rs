@@ -10,6 +10,7 @@ extern crate scraper;
 use ansi_term::Colour::{Green, Yellow, Red, White};
 use clap::{App, Arg};
 use hyper::client::Client;
+use hyper::client::response::Response;
 use hyper::header::Headers;
 use libsnatch::authorization::{AuthorizationHeaderFactory, AuthorizationType, GetAuthorizationType};
 use libsnatch::Bytes;
@@ -144,8 +145,10 @@ fn main() {
     let local_path = Path::new(path_user);
 
     // Retrieve the html page to extract the json containing the keys of the tracks
+    let mut html_page_content = String::new();
     let html_page = hyper_client.get_http_response(&(format!("{}/{}/{}", &url, &account, &page)))
-        .expect("The server didn't answer");
+        .expect("The server didn't answer")
+        .read_to_string(&html_page_content);
     // Create the parser
     let json_class = Selector::parse("#displayList-data").expect("Initializing the parsing failed");
     // Parsing the DOM to find the json
