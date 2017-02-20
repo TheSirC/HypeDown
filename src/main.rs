@@ -10,7 +10,6 @@ extern crate scraper;
 use ansi_term::Colour::{Green, Yellow, Red, White};
 use clap::{App, Arg};
 use hyper::client::Client;
-use hyper::client::response::Response;
 use hyper::header::Headers;
 use libsnatch::authorization::{AuthorizationHeaderFactory, AuthorizationType, GetAuthorizationType};
 use libsnatch::Bytes;
@@ -21,6 +20,7 @@ use libsnatch::http_version::ValidateHttpVersion;
 use libsnatch::write::OutputFileWriter;
 use std::fs::File;
 use std::io;
+use std::io::Read;
 use std::io::Write;
 use std::path::Path;
 use std::process::exit;
@@ -148,11 +148,13 @@ fn main() {
     let mut html_page_content = String::new();
     let html_page = hyper_client.get_http_response(&(format!("{}/{}/{}", &url, &account, &page)))
         .expect("The server didn't answer")
-        .read_to_string(&html_page_content);
+        .read_to_string(&mut html_page_content);
     // Create the parser
     let json_class = Selector::parse("#displayList-data").expect("Initializing the parsing failed");
+    // Creating a parsing fragment (for it to live long enough)
+    let parser = Html::parse_fragment(&html_page_content);
     // Parsing the DOM to find the json
-    let json = Html::parse_fragment(html_page).select(&json_class).expect("Parsing failed");
+    let json = parser.select(&json_class);
 
     if local_path.exists() {
         if local_path.is_dir() {
