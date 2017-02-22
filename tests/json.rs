@@ -1,6 +1,7 @@
 extern crate hyper;
 extern crate libsnatch;
 extern crate scraper;
+extern crate json;
 
 use hyper::client::Client;
 use libsnatch::client::GetResponse;
@@ -20,11 +21,17 @@ fn json_parsing() {
     let html_page = hyper_client.get_http_response(&(format!("{}/{}/{}", &url, &account, &page)))
         .expect("The server didn't answer")
         .read_to_string(&mut html_page_content);
+    // Creating the parsed html page
+    let html_page_content = Html::parse_document(&html_page_content) ;
     // Create the parser
     let json_class = Selector::parse("#displayList-data").expect("Initializing the parsing failed");
-    // Creating a parsing fragment (for it to live long enough)
-    let parser = Html::parse_fragment(&html_page_content);
     // Parsing the DOM to find the json
-    let json = parser.select(&json_class);
-    assert!(json)
+    let unser_json = html_page_content.select(&json_class)
+        .collect::<Vec<_>>()
+        .iter()
+        .map(|&x| x.inner_html())
+        .collect::<String>();
+    // Creating the serialized json
+    let json = json::parse(&unser_json).unwrap();
+    println!("{:#}",json);
 }
