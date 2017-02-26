@@ -1,7 +1,7 @@
 use hyper::client::Client;
 use hyper::client::response::Response;
 use hyper::error::Error;
-use hyper::header::Headers;
+use hyper::header::*;
 use hyper::method::Method;
 
 /// Trait that represents some methods to send a specific request
@@ -25,6 +25,12 @@ pub trait GetResponse {
                                        url: &str,
                                        header: Headers)
                                        -> Result<Response, Error>;
+    /// Given a specific URL, a specific cookie,
+    /// get the response from the target server
+    fn get_json_response_using_cookie(&self,
+                                      url: &str,
+                                      cookie: &Vec<String>)
+                                      -> Result<Response, Error>;
 }
 
 impl GetResponse for Client {
@@ -48,5 +54,15 @@ impl GetResponse for Client {
                                        custom_header: Headers)
                                        -> Result<Response, Error> {
         self.request(Method::Get, url).headers(custom_header).send()
+    }
+
+    fn get_json_response_using_cookie(&self,
+                                      url: &str,
+                                      cookie: &Vec<String>)
+                                      -> Result<Response, Error> {
+        let mut header = Headers::new();
+        header.set(Cookie(cookie.clone()));
+        header.set(Accept::json());
+        self.get_http_response_using_headers(url, header)
     }
 }
