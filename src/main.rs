@@ -97,12 +97,12 @@ fn main() {
     let mut html_page_content = String::new();
     let mut server_response =
         hyper_client.get_http_response(&(format!("{}/{}/{}", &url, &account, &page)))
-            .expect("The server didn't answer");
+            .expect("The server didn't answer the first time");
     server_response.read_to_string(&mut html_page_content);
     // Creating the cookie for later
     let cookie_request =
         hyper_client.get_http_response(&(format!("{}/{}/{}", &url, &account, &page)))
-            .expect("The server didn't answer");
+            .expect("The server didn't answer for the cookie");
     let mut cookie: &Vec<String> = &Vec::new();
     if let Some(&SetCookie(ref content)) =
         server_response.headers
@@ -129,16 +129,21 @@ fn main() {
         // Track's id and key
         let ref id = json["tracks"][i]["id"];
         let ref key = json["tracks"][i]["key"];
+        let ref song_type = json["tracks"][i]["type"];
         let ref base_url = format!("{}/serve/source/{}/{}", url, id, key);
         // Track's informations
         let ref artist_name = json["tracks"][i]["artist"];
         let ref song_name = json["tracks"][i]["song"];
         let ref file_name = format!("{} - {}.mp3", artist_name, song_name);
-
+        println!("Parsing : {:?} - {:?}", artist_name, song_name);
+        if song_type == false {
+            println!("Skipping song");
+            continue;
+        }
         // Sending the request to get the url to get the file
         let mut song_url_content = String::new();
-        let url_song_page = hyper_client.get_json_response_using_cookie(&base_url, cookie)
-            .expect("The server didn't answer")
+        let url_song_page = hyper_client.get_json_response_using_cookie(&base_url, &cookie.clone())
+            .expect("The server didn't answer for the json of the song")
             .read_to_string(&mut song_url_content);
         // Creating the serialized json
         let mut json_song = json::parse(&song_url_content)
@@ -149,7 +154,7 @@ fn main() {
         // Using Snatch starting here, HUGE thanks to them
         // Get the first response from the server
         let client_response = hyper_client.get_head_response(&url_song)
-            .expect("The server didn't answer");
+            .expect("The server didn't answer for the song");
 
         print!("# Waiting a response from the remote server... ");
 
@@ -188,7 +193,6 @@ fn main() {
             }
             None => None,
         };
-        println!("Ici");
         let client_response = match auth_header_factory.clone() {
             Some(header_factory) => {
                 let mut headers = Headers::new();
@@ -226,6 +230,11 @@ fn main() {
                 exit(1);
             }
         };
+
+        if remote_content_length == 0 {
+            println!("Song unavailable");
+            continue;
+        }
 
         println!("# Remote content length: {:?} MB",
                  (remote_content_length / 1000000) as Bytes);
