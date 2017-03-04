@@ -49,7 +49,6 @@ fn main() {
         .arg(Arg::with_name("limit")
             .long("limit")
             .short("l")
-            .required(true)
             .takes_value(true)
             .help("The maximum number of track you want to download"))
         .arg(Arg::with_name("threads")
@@ -135,9 +134,9 @@ fn main() {
         let ref artist_name = json["tracks"][i]["artist"];
         let ref song_name = json["tracks"][i]["song"];
         let ref file_name = format!("{} - {}.mp3", artist_name, song_name);
-        println!("Parsing : {:?} - {:?}", artist_name, song_name);
+        println!("{}{} - {}", Green.bold().paint("Parsing : "), artist_name, song_name);
         if song_type == false {
-            println!("Skipping song");
+            println!("{}", Yellow.paint("Skipping song"));
             continue;
         }
         // Sending the request to get the url to get the file
@@ -232,7 +231,7 @@ fn main() {
         };
 
         if remote_content_length == 0 {
-            println!("Song unavailable");
+            println!("{}", Yellow.bold().paint("Song unavailable"));
             continue;
         }
 
