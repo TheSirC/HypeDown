@@ -67,6 +67,6 @@ fn json_parsing() {
     // let song_url_content = Html::parse_document(&song_url_content);
     // Creating the serialized json
     let mut json_song = json::parse(&song_url_content).unwrap();
-    println!("{:?}",
-             json_song["url"].take_string().expect("No links found"));
+    println!("{}",
+             json_song["url"].take_string().expect("No links found").as_str().trim_matches('\"'));
 }
