@@ -2,6 +2,7 @@ extern crate ansi_term;
 #[macro_use]
 extern crate clap;
 extern crate hyper;
+extern crate hyper_native_tls;
 extern crate libsnatch;
 extern crate num_cpus;
 extern crate json;
@@ -11,6 +12,8 @@ use ansi_term::Colour::{Green, Yellow, Red, White};
 use clap::{App, Arg};
 use hyper::client::Client;
 use hyper::header::Headers;
+use hyper::net::HttpsConnector;
+use hyper_native_tls::NativeTlsClient;
 use libsnatch::authorization::{AuthorizationHeaderFactory, AuthorizationType, GetAuthorizationType};
 use libsnatch::Bytes;
 use libsnatch::client::GetResponse;
@@ -134,7 +137,10 @@ fn main() {
         let ref artist_name = json["tracks"][i]["artist"];
         let ref song_name = json["tracks"][i]["song"];
         let ref file_name = format!("{} - {}.mp3", artist_name, song_name);
-        println!("{}{} - {}", Green.bold().paint("Parsing : "), artist_name, song_name);
+        println!("{}{} - {}",
+                 Green.bold().paint("Parsing : "),
+                 artist_name,
+                 song_name);
         if song_type == false {
             println!("{}", Yellow.paint("Skipping song"));
             continue;
@@ -152,10 +158,14 @@ fn main() {
             .expect("No links found");
         // Using Snatch starting here, HUGE thanks to them
         // Get the first response from the server
-        let client_response = hyper_client.get_head_response(&url_song)
+        let ssl = NativeTlsClient::new().unwrap();
+        let connector = HttpsConnector::new(ssl);
+        let client = Client::with_connector(connector);
+        let client_response = client.get_head_response(&url_song)
             .expect("The server didn't answer for the song");
 
-        print!("# Waiting a response from the remote server... ");
+        print!("{}",
+               Yellow.paint("# Waiting a response from the remote server... "));
 
         if !client_response.version.greater_than_http_11() {
             println!("{}",
@@ -214,8 +224,8 @@ fn main() {
             } else {
                 println!("{}",
                          Yellow.bold()
-                             .paint("[WARNING] The path to store the file already exists! \
-                                     It is going to be overriden."));
+                             .paint("[WARNING] The path to store the file already exists! It is \
+                                     going to be overriden."));
             }
         }
 
@@ -250,11 +260,10 @@ fn main() {
                         threads as u64,
                         &url_song,
                         auth_header_factory);
-
-        println!("{} Your download is available in {}",
-                 Green.bold().paint("Done!"),
-                 local_path.to_str().expect("Failed to print the path"));
     }
+    println!("{} Your download is available in {}",
+             Green.bold().paint("Done!"),
+             local_path.to_str().expect("Failed to print the path"));
 }
 
 fn prompt_user(style: ansi_term::Style, prompt: &str) -> String {
