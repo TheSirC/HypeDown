@@ -5,6 +5,8 @@ use client::GetResponse;
 use hyper::client::Client;
 use hyper::error::Error;
 use hyper::header::{ByteRangeSpec, Headers, Range};
+use hyper::net::HttpsConnector;
+use hyper_native_tls::NativeTlsClient;
 use pbr::{MultiBar, Pipe, ProgressBar, Units};
 use response::CheckResponseStatus;
 use std::cmp::min;
@@ -127,7 +129,9 @@ pub fn download_chunks(content_length: u64,
 
         let (mut http_header, RangeBytes(chunk_offset, chunk_length)) =
             get_header_from_index(chunk_index, content_length, global_chunk_length).unwrap();
-        let hyper_client = Client::new();
+        let ssl = NativeTlsClient::new().unwrap();
+        let connector = HttpsConnector::new(ssl);
+        let hyper_client = Client::with_connector(connector);
         let url_clone = String::from(url);
         if let Some(auth_header_factory) = authorization_header_factory.clone() {
             http_header.set(auth_header_factory.build_header());

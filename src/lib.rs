@@ -1,5 +1,6 @@
 extern crate hyper;
 extern crate pbr;
+extern crate hyper_native_tls;
 
 use std::sync::{Arc, Mutex};
 
