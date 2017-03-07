@@ -59,10 +59,6 @@ fn main() {
             .short("t")
             .takes_value(true)
             .help("Threads which can use to download"))
-        .arg(Arg::with_name("debug")
-            .long("debug")
-            .short("d")
-            .help("Active the debug mode"))
         .arg(Arg::with_name("force")
             .long("force")
             .help("Assume Yes to all queries and do not prompt"))
@@ -84,15 +80,6 @@ fn main() {
     // because the argument must be entered
     let base_url = format!("{}/{}/{}", &url, &account, &page);
     let threads: usize = value_t!(argparse, "threads", usize).unwrap_or(num_cpus::get_physical());
-
-    if argparse.is_present("debug") {
-        println!("# [{}] version: {}",
-                 Yellow.bold().paint("DEBUG_MODE"),
-                 crate_version!());
-        println!("# [{}] threads: {}",
-                 Yellow.bold().paint("DEBUG_MODE"),
-                 threads);
-    }
 
     // Run HypeDown
     let hyper_client = Client::new();
@@ -125,12 +112,22 @@ fn main() {
         .collect::<String>();
     // Creating the serialized json
     let json = json::parse(&unser_json).expect("Failed to parse the json in the page");
+    let limit_num = limit.parse::<usize>().unwrap_or(1);
+    if limit_num > 40 {
+        println!("{}",
+                 Yellow.bold()
+                     .paint("There is only 40 tracks by page. Parsing the first 40 you asked \
+                             for."));
+        println!("{}",
+                 Red.bold()
+                     .paint("Parse next page to get more!"));
+    }
 
     // Iterate over tracks if there is an Err we stop at 0
     if argparse.is_present("dry-run") {
         println!("{}",
                  Green.bold().paint("List of song parsed with that configuration"));
-        for i in 0..limit.parse::<usize>().unwrap_or(1) {
+        for i in 0..limit_num {
             // Parsing useful informations
             // Track's id and key
             let ref id = json["tracks"][i]["id"];
@@ -147,7 +144,7 @@ fn main() {
         // Ask the user for a path to download the tracks
         let path_user = &(prompt_user(White.bold(), "Local path to download the tracks :"));
         let local_path = Path::new(path_user);
-        for i in 0..limit.parse::<usize>().unwrap_or(1) {
+        for i in 0..limit_num {
             // Parsing useful informations
             // Track's id and key
             let ref id = json["tracks"][i]["id"];
@@ -168,6 +165,7 @@ fn main() {
             }
             // Sending the request to get the url to get the file
             let mut song_url_content = String::new();
+            // Catching the error
             let mut url_song_reponse =
                 match hyper_client.get_json_response_using_cookie(&base_url, &cookie.clone()) {
                     Ok(r) => Ok(r),
