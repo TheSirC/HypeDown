@@ -147,9 +147,21 @@ fn main() {
         }
         // Sending the request to get the url to get the file
         let mut song_url_content = String::new();
-        let url_song_page = hyper_client.get_json_response_using_cookie(&base_url, &cookie.clone())
-            .expect("The server didn't answer for the json of the song")
-            .read_to_string(&mut song_url_content);
+        let mut url_song_reponse =
+            match hyper_client.get_json_response_using_cookie(&base_url, &cookie.clone()) {
+                Ok(r) => Ok(r),
+                Err(hyper::error::Error::Io(e)) => {
+                    if e.kind() == io::ErrorKind::ConnectionAborted {
+                        hyper_client.get_json_response_using_cookie(&base_url, &cookie.clone())
+                    } else {
+                        Err(hyper::error::Error::Io(e))
+                    }
+                }
+                Err(e) => Err(e),
+            };
+        let url_song_page =
+            url_song_reponse.expect("The server didn't answer for the json of the song")
+                .read_to_string(&mut song_url_content);
         // Creating the serialized json
         let mut json_song = json::parse(&song_url_content)
             .expect("Failed to parse the json for the song");
