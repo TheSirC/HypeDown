@@ -1,3 +1,7 @@
+#![allow(unused_variables)]
+#![allow(non_snake_case)]
+#![allow(unused_mut)]
+#![allow(unused_must_use)]
 extern crate ansi_term;
 #[macro_use]
 extern crate clap;
@@ -46,7 +50,6 @@ fn main() {
         .arg(Arg::with_name("page")
             .long("page")
             .short("p")
-            .required(true)
             .takes_value(true)
             .help("The number of the page in which you want to download the favorite"))
         .arg(Arg::with_name("limit")
@@ -74,7 +77,9 @@ fn main() {
     // Get informations from arguments
     let account = argparse.value_of("account").unwrap().to_string(); // The use of unwrap is legit
     // because the argument must be entered
-    let page = argparse.value_of("page").unwrap().to_string(); // The use of unwrap is legit
+    let page = argparse.value_of("page")
+        .unwrap_or("1")
+        .to_string(); // The use of unwrap is legit
     // because the argument must be entered
     let limit = argparse.value_of("limit")
         .unwrap_or("1")
