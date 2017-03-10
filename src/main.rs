@@ -76,7 +76,9 @@ fn main() {
     // because the argument must be entered
     let page = argparse.value_of("page").unwrap().to_string(); // The use of unwrap is legit
     // because the argument must be entered
-    let limit = argparse.value_of("limit").unwrap().to_string(); // The use of unwrap is legit
+    let limit = argparse.value_of("limit")
+        .unwrap_or("1")
+        .to_string(); // The use of unwrap is legit
     // because the argument must be entered
     let base_url = format!("{}/{}/{}", &url, &account, &page);
     let threads: usize = value_t!(argparse, "threads", usize).unwrap_or(num_cpus::get_physical());
@@ -112,12 +114,14 @@ fn main() {
         .collect::<String>();
     // Creating the serialized json
     let json = json::parse(&unser_json).expect("Failed to parse the json in the page");
-    let limit_num = limit.parse::<usize>().unwrap_or(1);
+    let mut limit_num = limit.parse::<usize>().unwrap();
     if limit_num > 40 {
+        limit_num = 40;
         println!("{}",
                  Yellow.bold()
                      .paint("There is only 40 tracks by page. Parsing the first 40 you asked \
                              for."));
+
         println!("{}",
                  Red.bold()
                      .paint("Parse next page to get more!"));
