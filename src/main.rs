@@ -147,7 +147,12 @@ fn main() {
             let ref artist_name = json["tracks"][i]["artist"];
             let ref song_name = json["tracks"][i]["song"];
             let ref file_name = format!("{} - {}.mp3", artist_name, song_name);
-            println!("{} - {}", artist_name, song_name);
+            if id.is_null() || song_type.is_null() || artist_name.is_null() {
+                println!("{}", Yellow.paint("No more song to download ! Stopping !"));
+                break;
+            } else {
+                println!("{} - {}", artist_name, song_name);
+            }
         }
     } else {
         // Ask the user for a path to download the tracks
@@ -171,6 +176,10 @@ fn main() {
             if song_type == false {
                 println!("{}", Yellow.paint("Skipping song"));
                 continue;
+            }
+            if id.is_null() || song_type.is_null() || artist_name.is_null() {
+                println!("{}", Yellow.paint("No more song to download ! Stopping !"));
+                break;
             }
             // Sending the request to get the url to get the file
             let mut song_url_content = String::new();
