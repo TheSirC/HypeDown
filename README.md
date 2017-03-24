@@ -14,7 +14,9 @@ For this program to work, you need to have an OpenSSL installation in your PATH 
 --help          Show this help
 --account       Specify the account name
 --page          Specify the page number
+--threads       Threads which can use to download
 --limit         (optional) Specify the maximum number of tracks to download
+--dry           Runs the program without downloading the tracks
 ```
 
 ## Acknowledgements
