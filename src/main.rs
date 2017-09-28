@@ -89,7 +89,9 @@ fn main() {
     let threads: usize = value_t!(argparse, "threads", usize).unwrap_or(num_cpus::get_physical());
 
     // Run HypeDown
-    let hyper_client = Client::new();
+    let ssl = NativeTlsClient::new().unwrap();
+    let connector = HttpsConnector::new(ssl);
+    let hyper_client = Client::with_connector(connector);
     // Retrieve the html page to extract the json containing the keys of the tracks
     let mut html_page_content = String::new();
     let mut server_response =
