@@ -5,10 +5,18 @@ pub trait CheckResponseStatus {
     /// Function to check if the `PartialContent` status is contained
     /// in the HTTP header response
     fn check_partialcontent_status(&self) -> bool;
+    /// Function to check if the `Not found` status is contained
+    /// in the HTTP header response
+    fn check_notfound_status(&self) -> bool;
 }
 
 impl CheckResponseStatus for Response {
     fn check_partialcontent_status(&self) -> bool {
         self.status == StatusCode::PartialContent
     }
+
+    fn check_notfound_status(&self) -> bool {
+        self.status == StatusCode::NotFound
+    }
+
 }
