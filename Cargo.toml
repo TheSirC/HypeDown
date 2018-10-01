@@ -1,7 +1,8 @@
 [package]
 authors = ["TheSirC <clocloranely@hotmail.fr>"]
-name = "HypeDown"
+name = "hype_down"
 version = "0.1.0"
 [dependencies]
-actix-web = "*"
-clap = "2.20.0"
+http = "*"
+hyper = "*"
+structopt = "*"

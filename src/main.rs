@@ -1,50 +1,29 @@
 #[macro_use]
-extern crate clap;
-extern crate actix_web;
+extern crate structopt;
+mod page;
+mod song;
+use structopt::StructOpt;
 
-use clap::{App, Arg};
-use actix_web::{actix,client};
+/// A downloader for the Hype Machine
+#[derive(StructOpt, Debug)]
+struct CLI {
+    /// The account you want to download the favorites from
+    #[structopt(short = "a", long = "account", default_value = "popular")]
+    account: String,
+
+    /// The maximum number of track you want to download
+    #[structopt(short = "l", long = "limit", default_value = "1")]
+    limit: i32,
+
+    /// Runs the program without downloading the tracks
+    #[structopt(short = "d", long = "dry-run")]
+    dry_run: bool,
+
+    /// Assume Yes to all queries and do not prompt
+    #[structopt(short = "f", long = "force")]
+    force: bool,
+}
 
 fn main() {
-    // Parse arguments
-
-    let argparse = App::new("HypeDown")
-        .about("A downloader for the Hype Machine")
-        .version(crate_version!())
-        .arg(
-            Arg::with_name("account")
-                .long("account")
-                .short("a")
-                .required(true)
-                .takes_value(true)
-                .help("The account you want to download the favorites"),
-        )
-        .arg(
-            Arg::with_name("page")
-                .long("page")
-                .short("p")
-                .takes_value(true)
-                .help("The number of the page in which you want to download the favorite"),
-        )
-        .arg(
-            Arg::with_name("limit")
-                .long("limit")
-                .short("l")
-                .takes_value(true)
-                .help("The maximum number of track you want to download"),
-        )
-        .arg(
-            Arg::with_name("force")
-                .long("force")
-                .help("Assume Yes to all queries and do not prompt"),
-        )
-        .arg(
-            Arg::with_name("dry-run")
-                .long("dry")
-                .short("d")
-                .help("Runs the program without downloading the tracks"),
-        )
-        .get_matches();
-
-        
+    let cli_options = CLI::from_args();
 }
