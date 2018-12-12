@@ -11,6 +11,7 @@ use self::scraper::{Html, Selector};
 use song::Song;
 use std::collections::HashSet;
 
+type Error = Box<dyn std::error::Error>;
 trait HypeAPI {
     fn get_cookie(&self, url: Uri) -> Result<hyper::header::HeaderValue, hyper::Error>;
     fn get_http_response(
@@ -45,17 +46,19 @@ where
         url: Uri,
         cookie: hyper::header::HeaderValue,
     ) -> Result<String, hyper::Error> {
+        use std::str;
         let request = Request::get(url).header("Cookie", cookie);
-
         (*self)
             .request(
                 request
                     .body(hyper::Body::empty())
                     .expect("The body of the request could not be consumed"),
             )
-            .map(|res| Ok(res.into_body()))
+            .map(hyper::Response::into_body)
             .wait()
-            .expect("Could unwrap the future for the HTTP response")
+            .map_err(Error::from)
+            .concat2()
+            .and_then(|c| str::from_utf8(&c).map(str::to_owned).map_err(Error::from))
     }
 }
 
