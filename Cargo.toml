@@ -3,6 +3,10 @@ authors = ["TheSirC <clocloranely@hotmail.fr>"]
 name = "hype_down"
 version = "0.1.0"
 [dependencies]
+futures = "*"
 http = "*"
 hyper = "*"
+hyper-tls = "*"
+json = "*"
+scraper = "*"
 structopt = "*"

@@ -1,7 +1,7 @@
 extern crate http;
 
+use self::http::uri::{InvalidUri, Uri};
 use std::hash::{Hash, Hasher};
-use self::http::uri::{Uri, InvalidUri};
 use std::str::FromStr;
 
 #[derive(Eq)]
@@ -31,7 +31,7 @@ impl Song {
 
 impl PartialEq for Song {
     fn eq(&self, rhs: &Song) -> bool {
-        self.id == rhs.id         
+        self.id == rhs.id
     }
 }
 

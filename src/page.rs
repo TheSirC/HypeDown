@@ -1,8 +1,13 @@
-use futures::{future, Future};
-use hyper::{Client, Uri};
-use hyper_tls::HttpsConnector;
-use scraper::{Html, Selector};
-use page::hyper::client::connect::Connect;
+extern crate futures;
+extern crate hyper;
+extern crate hyper_tls;
+extern crate json;
+extern crate scraper;
+
+use self::futures::{Future, Stream};
+use self::hyper::{client::connect::Connect, Client, Request, Uri};
+use self::hyper_tls::HttpsConnector;
+use self::scraper::{Html, Selector};
 use song::Song;
 use std::collections::HashSet;
 
@@ -12,7 +17,7 @@ trait HypeAPI {
         &self,
         url: Uri,
         cookie: hyper::header::HeaderValue,
-    ) -> Result<hyper::header::HeaderValue, hyper::Error>;
+    ) -> Result<String, hyper::Error>;
 }
 
 impl<T> HypeAPI for Client<HttpsConnector<T>>
@@ -31,15 +36,26 @@ where
                 } else {
                     panic!("Unable to find the Cookie header")
                 }
-            }).wait()
-            .expect("Could unwrap the future for the cookie")
-    }
-    fn get_http_response(&self, url: Uri) -> Result<hyper::header::HeaderValue, hyper::Error> {
-        (*self)
-            .get(url)
-            .map(|res| Ok(res.into_body().concat2()))
+            })
             .wait()
             .expect("Could unwrap the future for the cookie")
+    }
+    fn get_http_response(
+        &self,
+        url: Uri,
+        cookie: hyper::header::HeaderValue,
+    ) -> Result<String, hyper::Error> {
+        let request = Request::get(url).header("Cookie", cookie);
+
+        (*self)
+            .request(
+                request
+                    .body(hyper::Body::empty())
+                    .expect("The body of the request could not be consumed"),
+            )
+            .map(|res| Ok(res.into_body()))
+            .wait()
+            .expect("Could unwrap the future for the HTTP response")
     }
 }
 
@@ -77,14 +93,13 @@ impl Page {
         // Initialization of the client
         let https_connector = HttpsConnector::new(4).expect("Initialization of the HTTPS failed");
         let client = Client::builder().build(https_connector);
-        // Retrieve the html page to extract the json containing the keys of the tracks
+        // Creating the cookie for later
         let mut cookie_response = client
             .get_cookie(self.url())
             .expect("The server didn't answer for the cookie");
-        let mut html_page_content = server_response.to_str().unwrap().to_string();
-        // Creating the cookie for later
+        // Retrieve the html page to extract the json containing the keys of the tracks
         let html_page_content = client
-            .get_http_response(self.url())
+            .get_http_response(self.url(), cookie_response)
             .expect("The server didn't answer the first time");
         // Creating the parsed html page
         let html_page_content = Html::parse_document(&html_page_content);
