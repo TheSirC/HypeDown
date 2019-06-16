@@ -1,24 +1,18 @@
-extern crate futures;
-extern crate hyper;
-extern crate hyper_tls;
-extern crate json;
-extern crate scraper;
+use crate::song::Song;
+use futures::{Future, Stream};
+use hyper::{client::connect::Connect, Client, Request, Uri};
+use hyper_tls::HttpsConnector;
+use scraper::{Html, Selector};
+use serde::{Deserialize, Serialize};
 
-use self::futures::{Future, Stream};
-use self::hyper::{client::connect::Connect, Client, Request, Uri};
-use self::hyper_tls::HttpsConnector;
-use self::scraper::{Html, Selector};
-use song::Song;
-use std::collections::HashSet;
-
-type Error = Box<dyn std::error::Error>;
+type Error = Box<hyper::Error>;
 trait HypeAPI {
     fn get_cookie(&self, url: Uri) -> Result<hyper::header::HeaderValue, hyper::Error>;
     fn get_http_response(
         &self,
         url: Uri,
         cookie: hyper::header::HeaderValue,
-    ) -> Result<String, hyper::Error>;
+    ) -> Result<String, Box<hyper::Error>>;
 }
 
 impl<T> HypeAPI for Client<HttpsConnector<T>>
@@ -33,7 +27,7 @@ where
             .get(url)
             .map(|res| {
                 if let Some(cookie) = res.headers().get("SetCookie") {
-                    Ok(*cookie)
+                    Ok(cookie.to_owned())
                 } else {
                     panic!("Unable to find the Cookie header")
                 }
@@ -45,30 +39,33 @@ where
         &self,
         url: Uri,
         cookie: hyper::header::HeaderValue,
-    ) -> Result<String, hyper::Error> {
+    ) -> Result<String, Box<hyper::Error>> {
         use std::str;
-        let request = Request::get(url).header("Cookie", cookie);
         (*self)
-            .request(
-                request
+            .request(Request::get(url).header("Cookie", cookie)
                     .body(hyper::Body::empty())
                     .expect("The body of the request could not be consumed"),
             )
-            .map(hyper::Response::into_body)
-            .wait()
+            .and_then(|res| res.into_body().concat2())
+            .and_then(|c| {
+                Ok(str::from_utf8(&c)
+                    .map(str::to_owned)
+                    .expect("The body could not be parsed as a UTF-8 string !"))
+            })
             .map_err(Error::from)
-            .concat2()
-            .and_then(|c| str::from_utf8(&c).map(str::to_owned).map_err(Error::from))
+            .map_err(Box::from)
+            .wait()
     }
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Page {
     // The page url
     account: String,
     // The page number where at
     page: i32,
     // The list of track retrievable on this page
-    track_song: HashSet<Song>,
+    track_song: Vec<Song>,
 }
 
 impl Page {
@@ -76,7 +73,7 @@ impl Page {
         Page {
             account: "popular".into(),
             page: 1,
-            track_song: HashSet::new(),
+            track_song: Vec::with_capacity(40), // Because a page is 40 songs long
         }
     }
     pub fn new(account: String) -> Self {
@@ -86,7 +83,7 @@ impl Page {
         }
     }
 
-    fn url<'a>(self) -> Uri {
+    fn url(&self) -> Uri {
         format!("http://hypem.com/{}/{}", self.account, self.page)
             .parse()
             .expect("Unable to parse the uri")
@@ -115,10 +112,8 @@ impl Page {
             .collect::<Vec<_>>()
             .iter()
             .map(|&x| x.inner_html())
-            .collect::<String>()
-            .map(json::parse)
-            .expect("Failed to parse the json in the page");
-        println!("{}", json);
+            .collect::<String>();
+        serde_json::from_str(&json).expect("The HTML could not be parsed a Page!")
     }
 
     pub fn download_songs(self, limit: usize) {

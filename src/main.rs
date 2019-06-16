@@ -11,17 +11,13 @@ struct CLI {
     #[structopt(short = "a", long = "account", default_value = "popular")]
     account: String,
 
-    /// The maximum number of track you want to download
-    #[structopt(short = "l", long = "limit", default_value = "1")]
-    limit: i32,
+    /// If the session should be interactive or just download the previous <number> of tracks
+    #[structopt(short = "i", long = "interactive")]
+    interactive: bool,
 
-    /// Runs the program without downloading the tracks
-    #[structopt(short = "d", long = "dry-run")]
-    dry_run: bool,
-
-    /// Assume Yes to all queries and do not prompt
-    #[structopt(short = "f", long = "force")]
-    force: bool,
+    /// The offset page where the downloading you should be strat to be fetched
+    #[structopt(short = "p", long = "page", default_value = "1")]
+    page: u32,
 }
 
 fn main() {

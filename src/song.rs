@@ -1,10 +1,8 @@
-extern crate http;
-
-use self::http::uri::{InvalidUri, Uri};
-use std::hash::{Hash, Hasher};
+use crate::http::uri::{InvalidUri, Uri};
+use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
-#[derive(Eq)]
+#[derive(Serialize, Deserialize)]
 pub struct Song {
     // The id given by the "API"
     id: String,
@@ -26,17 +24,5 @@ impl Song {
         let mut file_name = format!("{} - {}.mp3", self.artist_name, self.song_name);
         file_name.retain(|c| c != '/'); // Let's check for path injection right... <_<
         file_name
-    }
-}
-
-impl PartialEq for Song {
-    fn eq(&self, rhs: &Song) -> bool {
-        self.id == rhs.id
-    }
-}
-
-impl Hash for Song {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.id.hash(state);
     }
 }
