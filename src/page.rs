@@ -2,8 +2,11 @@ use crate::song::Song;
 use futures::{Future, Stream};
 use hyper::{client::connect::Connect, Client, Request, Uri};
 use hyper_tls::HttpsConnector;
+use parallel_getter::ParallelGetter;
+use reqwest::Client as reqC;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
+use std::fs::File;
 
 type Error = Box<hyper::Error>;
 trait HypeAPI {
@@ -42,7 +45,9 @@ where
     ) -> Result<String, Box<hyper::Error>> {
         use std::str;
         (*self)
-            .request(Request::get(url).header("Cookie", cookie)
+            .request(
+                Request::get(url)
+                    .header("Cookie", cookie)
                     .body(hyper::Body::empty())
                     .expect("The body of the request could not be consumed"),
             )
@@ -89,7 +94,7 @@ impl Page {
             .expect("Unable to parse the uri")
     }
 
-    fn retrieve_page(self, page_url: Uri) -> Page {
+    fn retrieve_page(&self, page_url: Uri) -> Page {
         // Initialization of the client
         let https_connector = HttpsConnector::new(4).expect("Initialization of the HTTPS failed");
         let client = Client::builder().build(https_connector);
@@ -116,7 +121,38 @@ impl Page {
         serde_json::from_str(&json).expect("The HTML could not be parsed a Page!")
     }
 
-    pub fn download_songs(self, limit: usize) {
-        unimplemented!()
+    pub fn download_songs(&self, songs: Vec<Song>) {
+        let _: Vec<_> = songs.iter().map(|song| {
+        let client = std::sync::Arc::new(reqC::new());
+            let mut file = File::create(song.filename()).unwrap();
+            let result = ParallelGetter::new(
+                &song.url()
+                    .expect("The song seem to have a malformed")
+                    .to_string(),
+                &mut file,
+            )
+            // Optional client to use for the request.
+            .client(client)
+            // Optional path to store the parts.
+            .cache_path(std::path::PathBuf::from("."))
+            // Number of theads to use.
+            .threads(4)
+            // threshold (length in bytes) to determine when multiple threads are required.
+            .threshold_parallel(1 * 1024 * 1024)
+            // threshold for defining when to store parts in memory or on disk.
+            .threshold_memory(10 * 1024 * 1024)
+            // Callback for monitoring progress.
+            .callback(
+                16,
+                Box::new(|progress, total| {
+                    println!("{} of {} KiB downloaded", progress / 1024, total / 1024);
+                }),
+            )
+            // Commit the parallel GET requests.
+            .get();
+            if let Err(why) = result {
+                eprintln!("errored: {}", why);
+            }
+        }).collect();
     }
 }

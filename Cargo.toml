@@ -8,6 +8,8 @@ futures = "*"
 http = "*"
 hyper = "*"
 hyper-tls = "*"
+parallel-getter = "*"
+reqwest = "*"
 serde = {version = "1.0", features = ["derive"]}
 serde_json = "*"
 scraper = "*"
